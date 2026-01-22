@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+.npm
+*.log
+
+# Next.js
+.next/
+out/
+build/
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Docker/System
+.docker/
+uploads/
+model-cache/
+chroma-data/
+ollama-data/
+
+# OS
+.DS_Store
+Thumbs.db
