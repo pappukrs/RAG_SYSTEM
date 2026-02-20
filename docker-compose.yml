@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   frontend:
@@ -36,7 +35,6 @@ services:
       - PORT=4000
     depends_on:
       - chromadb
-      - ollama
     networks:
       - rag-network
 
@@ -51,25 +49,8 @@ services:
     networks:
       - rag-network
 
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama-data:/root/.ollama
-    networks:
-      - rag-network
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-
 volumes:
   chroma-data:
-  ollama-data:
   model-cache:
 
 networks:

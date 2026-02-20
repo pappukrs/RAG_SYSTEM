@@ -1,10 +1,10 @@
-const LLMFactory = require('../providers/llm/LLMFactory');
+const LLMRouter = require('../providers/llm/LLMRouter');
 const VectorService = require('./VectorService');
 const EmbeddingService = require('./EmbeddingService');
 
 class RAGService {
     constructor() {
-        this.llmProvider = LLMFactory.getProvider();
+        this.llmProvider = LLMRouter;
     }
 
     /**

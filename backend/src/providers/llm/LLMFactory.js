@@ -1,5 +1,6 @@
 const OllamaProvider = require('./OllamaProvider');
 const OpenAIProvider = require('./OpenAIProvider');
+const GeminiProvider = require('./GeminiProvider');
 const config = require('../../config');
 
 class LLMFactory {
@@ -11,6 +12,8 @@ class LLMFactory {
                 return new OllamaProvider();
             case 'openai':
                 return new OpenAIProvider();
+            case 'gemini':
+                return new GeminiProvider();
             default:
                 throw new Error(`Unsupported LLM provider: ${providerType}`);
         }

@@ -10,7 +10,11 @@ const config = {
         apiKey: process.env.OPENAI_API_KEY,
         model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
     },
-    llmProvider: process.env.LLM_PROVIDER || 'ollama', // 'ollama' or 'openai'
+    gemini: {
+        apiKey: process.env.GEMINI_API_KEY,
+        model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+    },
+    llmProvider: process.env.LLM_PROVIDER || 'ollama', // 'ollama', 'openai', or 'gemini'
     chroma: {
         url: process.env.CHROMA_URL || 'http://chromadb:8000',
     },
