@@ -1,32 +1,63 @@
 # AI-Powered RAG System (Modern UI + Streaming)
 
-A premium Retrieval-Augmented Generation (RAG) system built with **Next.js 15**, **Node.js**, **Socket.io**, **ChromaDB**, and **Ollama**. This system features a sleek ChatGPT-like interface with real-time word-by-word streaming responses and GPU-accelerated local processing.
+A professional Retrieval-Augmented Generation (RAG) system built with Next.js 15, Node.js, Socket.io, ChromaDB, and multi-model LLM support. This system features a centered chat interface with real-time streaming responses and advanced document processing capabilities.
 
-## 🚀 Key Features
+## Key Features
 
-- **Real-time Streaming**: Experience word-by-word responses powered by WebSockets (Socket.io).
-- **Modern UI/UX**: Premium centered chat layout with glassmorphism effects and a document-focused sidebar.
-- **Local RAG**: Process documents (PDF, DOCX, TXT) entirely on your machine using ChromaDB and Ollama.
-- **GPU Acceleration**: Built-in support for NVIDIA GPUs via Docker.
-- **Hot Reloading**: Fully Dockerized development flow with volume syncing.
+- **Real-time Streaming**: Word-by-word response delivery using WebSockets for a responsive user experience.
+- **Modern UI/UX**: Centered chat layout with glassmorphism effects and a document-focused sidebar for context management.
+- **Multi-Model Support**: Integrated support for Google Gemini, OpenAI, and local Ollama models.
+- **Intelligent LLM Routing**: Sophisticated routing logic with automatic failover and method-based fallback.
+- **Efficient Document Processing**: Support for PDF, DOCX, and TXT files with local embedding generation and vector storage.
+- **Dockerized Environment**: Fully containerized setup with optimized builds and service isolation.
 
-## 🏗️ Architecture
+## System Architecture
+
+The following diagram illustrates the flow of data and the interaction between components:
 
 ```mermaid
 graph TD
     User([User]) <--> Frontend[Next.js Frontend]
     Frontend <--> |WebSockets / API| Backend[Node.js Backend]
-    Backend --> |Embeddings| Transformers[Transformers.js]
-    Backend --> |Vector Ops| ChromaDB[ChromaDB]
-    Backend --> |Chat Completion| Ollama[Ollama Container]
-    Ollama --> |GTX 1050| GPU[NVIDIA GPU]
+    
+    subgraph "Backend Services"
+        RAG[RAG Service]
+        Router[LLM Router]
+        Vector[Vector Service]
+        Embed[Embedding Service]
+    end
+
+    RAG --> Embed
+    RAG --> Vector
+    RAG --> Router
+    
+    Vector --> Chroma[ChromaDB]
+    Router --> |Primary| Gemini[Gemini 2.x Provider]
+    Router --> |Fallback| OpenAI[OpenAI Provider]
+    Router --> |Local| Ollama[Ollama Provider]
 ```
 
-## 🛠️ Setup Guide
+## Multi-Model Design Implementation
+
+The backend architecture leverages several design patterns to ensure flexibility and reliability in LLM interactions:
+
+### 1. Strategy Pattern (LLM Providers)
+Each LLM (Gemini, OpenAI, Ollama) is implemented as a discrete provider following a common interface. This allows the system to swap or add new models without changing the core RAG logic.
+
+### 2. Factory Pattern (LLM Factory)
+The `LLMFactory` centralizes the instantiation of providers based on environment configuration, decoupling the service layer from specific model implementations.
+
+### 3. Router Pattern (LLM Router)
+A specialized `LLMRouter` handles the intelligence of model selection:
+- **Primary vs. Fallback**: If the primary provider (e.g., Gemini) fails, the system automatically redirects the request to a secondary provider (e.g., OpenAI).
+- **Graceful Degradation**: If advanced features like streaming are unavailable for a specific model or region, the router falls back to standard generation to ensure system availability.
+
+## Setup Guide
 
 ### Prerequisites
-- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
-- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) (optional, for GPU support)
+- Docker & Docker Compose
+- Node.js (for local development)
+- API Keys for Gemini or OpenAI (optional, for cloud models)
 
 ### Installation
 
@@ -36,35 +67,25 @@ graph TD
    cd RAG_SYSTEM
    ```
 
-2. **Start the environment:**
+2. **Configure Environment:**
+   Update `backend/.env` with your API keys and preferred provider:
+   ```env
+   LLM_PROVIDER=gemini
+   GEMINI_API_KEY=your_key_here
+   ```
+
+3. **Start the environment:**
    ```bash
    docker compose up --build
    ```
 
-3. **Pull the LLM Model:**
-   While the containers are running, execute this in a new terminal:
-   ```bash
-   docker exec -it ollama ollama pull deepseek-r1:1.5b
-   ```
+## Project Structure
 
-## 🏃 Run Guide
-
-1. **Access the App**: Open [http://localhost:3000](http://localhost:3000) in your browser.
-2. **Upload Documents**: Use the sidebar to upload PDF, DOCX, or TXT files.
-3. **Chat**: Once analyzed, start asking questions. The system will retrieve relevant context from your files and stream the answer in real-time.
-
-## 📁 Project Structure
-
-- `frontend/`: Next.js 15 application with Tailwind CSS and Lucide icons.
-- `backend/`: Node.js/Express server using Socket.io for streaming.
-- `backend/services/`: Core logic for embeddings, vector storage, and LLM integration.
-- `docker-compose.yml`: Orchestrates ChromaDB, Ollama, Backend, and Frontend.
-
-## 🔧 Troubleshooting
-
-- **Socket Connection Errors**: Ensure the `NEXT_PUBLIC_API_URL` environment variable is correctly set to `http://localhost:4000/api`.
-- **Sluggish Performance**: If not using a GPU, consider switching to a smaller model in `backend/services/llmService.js`.
-- **Missing Dependencies**: If you see "Module not found", run `docker compose down -v` and rebuild.
+- `frontend/`: Next.js 15 application with Tailwind CSS.
+- `backend/`: Node.js/Express server.
+- `backend/src/providers/`: LLM provider implementations and routing logic.
+- `backend/src/services/`: Core RAG, Embedding, and Vector services.
+- `docker-compose.yml`: Orchestration for ChromaDB, Backend, and Frontend.
 
 ---
-Built with ❤️ by [Pappu Kumar](https://github.com/pappukrs)
+Built by [Pappu Kumar](https://github.com/pappukrs)
