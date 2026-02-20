@@ -2,6 +2,8 @@ const express = require('express');
 const multer = require('multer');
 const DocumentController = require('../controllers/DocumentController');
 const QueryController = require('../controllers/QueryController');
+const authController = require('../controllers/authController');
+const authMiddleware = require('../middleware/authMiddleware');
 const config = require('../config');
 
 const router = express.Router();
@@ -14,7 +16,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Routes
+// Auth Routes
+router.post('/auth/send-otp', authController.sendOTP);
+router.post('/auth/verify-otp', authController.verifyOTP);
+router.get('/auth/me', authMiddleware, authController.getMe);
+
+// RAG Routes
 router.post('/upload', upload.single('file'), (req, res) =>
     DocumentController.upload(req, res)
 );

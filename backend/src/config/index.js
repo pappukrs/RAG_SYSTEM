@@ -19,6 +19,10 @@ const config = {
         url: process.env.CHROMA_URL || 'http://chromadb:8000',
     },
     uploadDir: process.env.UPLOAD_DIR || 'uploads',
+    db: {
+        url: process.env.DB_URL || 'postgresql://user:password@localhost:5432/rag_db',
+    },
+    jwtSecret: process.env.JWT_SECRET || 'super-secret-rag-token',
 };
 
 module.exports = config;

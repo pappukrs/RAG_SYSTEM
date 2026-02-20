@@ -52,6 +52,43 @@ A specialized `LLMRouter` handles the intelligence of model selection:
 - **Primary vs. Fallback**: If the primary provider (e.g., Gemini) fails, the system automatically redirects the request to a secondary provider (e.g., OpenAI).
 - **Graceful Degradation**: If advanced features like streaming are unavailable for a specific model or region, the router falls back to standard generation to ensure system availability.
 
+## Communication & Data Flow
+
+The system employs a hybrid communication strategy to balance high-performance data transfer with real-time interactivity.
+
+### 1. HTTP Protocol (RESTful API)
+Used for stateless requests and bulk data transfer.
+- **File Uploads**: Implementation uses `multipart/form-data` via `POST /api/upload`. This protocol ensures reliable transfer of larger document files (PDF, DOCX, TXT) to the server's staging area.
+- **Infrastructure**: Standard Express.js routing handles these requests, providing a consistent interface for legacy or non-streaming operations.
+
+### 2. WebSocket Protocol (Socket.IO)
+Used for low-latency, bidirectional, real-time communication during the RAG process.
+- **Event-Driven Architecture**:
+  - `query`: The frontend emits this event containing the user's prompt.
+  - `chunk`: The backend streams back partial LLM responses word-by-word. This provides immediate visual feedback to the user before the full generation is complete.
+  - `done`: Emitted once the stream concludes, carrying the finalized source metadata and retrieval information.
+  - `error`: Handles exceptional cases (like LLM timeouts or context exhaustion) gracefully without breaking the UI state.
+
+### 3. Data Flow Visualization
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend (Next.js)
+    participant BE as Backend (Node/Socket.io)
+    participant LLM as LLM Provider (Gemini/OAI)
+    
+    FE->>BE: HTTP POST /upload (Files)
+    BE-->>FE: HTTP 200 OK
+    
+    FE->>BE: Socket.emit('query', text)
+    BE->>LLM: Stream Request
+    loop Stream Generation
+        LLM-->>BE: Partial Chunk
+        BE-->>FE: Socket.emit('chunk', text)
+    end
+    BE-->>FE: Socket.emit('done', metadata)
+```
+
 ## Setup Guide
 
 ### Prerequisites

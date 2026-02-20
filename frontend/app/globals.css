@@ -2,15 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-    --foreground-rgb: 236, 239, 241;
-    --background-start-rgb: 15, 23, 42;
-    --background-end-rgb: 10, 15, 30;
+@layer base {
+    :root {
+        /* Premium Light Theme */
+        --background: 0 0% 98%;
+        --foreground: 240 10% 10%;
+        --card: 0 0% 100%;
+        --card-foreground: 240 10% 10%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 10% 10%;
+        --primary: 250 85% 60%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 240 5% 96%;
+        --secondary-foreground: 240 10% 10%;
+        --muted: 240 5% 96%;
+        --muted-foreground: 240 10% 40%;
+        --accent: 250 85% 60%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 240 6% 90%;
+        --input: 240 6% 90%;
+        --ring: 250 85% 60%;
+        --radius: 1.5rem;
+    }
+
+    .dark {
+        /* Ultra Premium Dark Theme - Deep OLED Black with Violet/Indigo glow */
+        --background: 240 4% 3%;
+        --foreground: 0 0% 100%;
+        --card: 240 4% 5%;
+        --card-foreground: 0 0% 100%;
+        --popover: 240 4% 5%;
+        --popover-foreground: 0 0% 100%;
+        --primary: 260 90% 65%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 240 4% 8%;
+        --secondary-foreground: 0 0% 100%;
+        --muted: 240 4% 8%;
+        --muted-foreground: 240 5% 60%;
+        --accent: 260 90% 65%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 240 4% 12%;
+        --input: 240 4% 12%;
+        --ring: 260 90% 65%;
+    }
 }
 
-body {
-    color: rgb(var(--foreground-rgb));
-    background: linear-gradient(to bottom,
-            transparent,
-            rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+@layer base {
+    * {
+        @apply border-border selection:bg-primary/30;
+    }
+
+    body {
+        @apply bg-background text-foreground transition-colors duration-700 ease-in-out antialiased;
+        font-feature-settings: "rlig" 1, "calt" 1;
+        background-image:
+            radial-gradient(circle at 15% 50%, hsla(260, 90%, 65%, 0.04), transparent 35%),
+            radial-gradient(circle at 85% 30%, hsla(280, 80%, 60%, 0.04), transparent 35%);
+        background-attachment: fixed;
+    }
+
+    .dark body {
+        background-image:
+            radial-gradient(circle at 10% 30%, hsla(260, 90%, 65%, 0.06), transparent 45%),
+            radial-gradient(circle at 90% 70%, hsla(280, 80%, 60%, 0.06), transparent 45%),
+            radial-gradient(circle at 50% 100%, hsla(220, 80%, 55%, 0.03), transparent 60%);
+    }
+}
+
+@layer components {
+    .glass {
+        @apply bg-background/40 backdrop-blur-md border border-white/10 shadow-xl;
+    }
+
+    .glass-dark {
+        @apply bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl;
+    }
+
+    .premium-card {
+        @apply glass rounded-2xl transition-all duration-300 hover:shadow-2xl hover:border-primary/30;
+    }
+
+    .sidebar-active {
+        @apply bg-primary/10 text-primary border-r-2 border-primary font-semibold;
+    }
+
+    .shimmer {
+        @apply relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent;
+    }
+}
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
 }

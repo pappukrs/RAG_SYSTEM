@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useState, ChangeEvent } from 'react';
-import { Upload, File, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, File, CheckCircle2, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 interface FileUploadProps {
     onUpload: () => void;
 }
 
 export default function FileUpload({ onUpload }: FileUploadProps) {
+    const { token } = useAuth();
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState<boolean>(false);
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -30,15 +33,19 @@ export default function FileUpload({ onUpload }: FileUploadProps) {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-            // Ensure no double slashes
             const uploadUrl = `${apiUrl.replace(/\/$/, '')}/upload`;
             await axios.post(uploadUrl, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`
+                }
             });
             setUploadStatus('success');
             onUpload();
-            // Clear file after successful upload
-            setTimeout(() => setFile(null), 3000);
+            setTimeout(() => {
+                setFile(null);
+                setUploadStatus('idle');
+            }, 3000);
         } catch (error) {
             console.error('Upload failed:', error);
             setUploadStatus('error');
@@ -49,56 +56,75 @@ export default function FileUpload({ onUpload }: FileUploadProps) {
 
     return (
         <div className="space-y-4">
-            <div className={`relative border-2 border-dashed rounded-2xl p-6 transition-all group ${file ? 'border-blue-500/50 bg-blue-500/5' : 'border-slate-700 hover:border-slate-600 bg-slate-800/30'
-                }`}>
+            <motion.div
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className={`relative border-2 border-dashed rounded-[1.5rem] p-8 transition-all duration-300 group ${file
+                    ? 'border-primary bg-primary/5 shadow-inner'
+                    : 'border-border/60 hover:border-primary/50 bg-secondary/20 hover:bg-primary/5'
+                    }`}
+            >
                 <input
                     type="file"
                     onChange={handleFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     accept=".pdf,.docx,.txt"
                 />
-                <div className="flex flex-col items-center justify-center gap-2 text-center pointer-events-none">
-                    <div className="p-3 bg-slate-700/50 rounded-xl mb-1 group-hover:scale-110 transition-transform">
-                        <Upload size={22} className="text-slate-400" />
+                <div className="flex flex-col items-center justify-center gap-4 text-center pointer-events-none">
+                    <div className={`p-4 rounded-2xl transition-all duration-500 transform group-hover:rotate-6 ${file ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110' : 'bg-background text-muted-foreground shadow-sm'
+                        }`}>
+                        {file ? <File size={28} /> : <Upload size={28} />}
                     </div>
-                    <p className="text-sm font-medium text-slate-300">
-                        {file ? file.name : "Click or drag to upload"}
-                    </p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">PDF, DOCX, TXT</p>
+                    <div className="space-y-1">
+                        <p className={`text-sm font-bold truncate max-w-[200px] transition-colors ${file ? 'text-primary' : 'text-foreground/80'}`}>
+                            {file ? file.name : "Drop documents here"}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground/60 uppercase racking-[0.3em] font-black">
+                            PDF • TXT • DOCX
+                        </p>
+                    </div>
                 </div>
-            </div>
+            </motion.div>
 
-            {file && (
-                <button
-                    onClick={handleUpload}
-                    disabled={uploading}
-                    className={`w-full py-3 px-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg ${uploadStatus === 'success'
-                        ? 'bg-emerald-600 text-white'
-                        : uploadStatus === 'error'
-                            ? 'bg-red-600 text-white'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/10'
-                        }`}
-                >
-                    {uploading ? (
-                        <>
-                            <Loader2 size={18} className="animate-spin" />
-                            <span>Processing...</span>
-                        </>
-                    ) : uploadStatus === 'success' ? (
-                        <>
-                            <CheckCircle2 size={18} />
-                            <span>Ready to Chat</span>
-                        </>
-                    ) : uploadStatus === 'error' ? (
-                        <>
-                            <AlertCircle size={18} />
-                            <span>Try Again</span>
-                        </>
-                    ) : (
-                        <span>Analyze Document</span>
-                    )}
-                </button>
-            )}
+            <AnimatePresence>
+                {file && (
+                    <motion.button
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        onClick={handleUpload}
+                        disabled={uploading}
+                        className={`w-full py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl transform active:scale-95 ${uploadStatus === 'success'
+                            ? 'bg-emerald-500 text-white shadow-emerald-500/20'
+                            : uploadStatus === 'error'
+                                ? 'bg-destructive text-destructive-foreground shadow-destructive/20'
+                                : 'bg-primary text-primary-foreground shadow-primary/30 hover:bg-primary/90'
+                            }`}
+                    >
+                        {uploading ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>Processing Engine...</span>
+                            </>
+                        ) : uploadStatus === 'success' ? (
+                            <>
+                                <CheckCircle2 size={16} />
+                                <span>Analysis Complete</span>
+                            </>
+                        ) : uploadStatus === 'error' ? (
+                            <>
+                                <AlertCircle size={16} />
+                                <span>Error Occurred</span>
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles size={16} />
+                                <span>Start Analysis</span>
+                            </>
+                        )}
+                    </motion.button>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

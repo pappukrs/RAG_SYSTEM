@@ -28,13 +28,23 @@ app.use(express.json());
 // Routes
 app.use('/api', routes);
 
+const jwt = require('jsonwebtoken');
+
 // WebSocket Logic
 io.on('connection', (socket) => {
     console.log('🔌 Client connected:', socket.id);
 
     socket.on('query', async (data) => {
-        const { question } = data;
+        const { question, token } = data;
         if (!question) return socket.emit('error', 'Question is required');
+
+        // Simple token verification for WebSocket
+        try {
+            if (!token) throw new Error('Authentication required');
+            jwt.verify(token, config.jwtSecret);
+        } catch (err) {
+            return socket.emit('error', 'Unauthorized: Invalid token');
+        }
 
         try {
             console.log(`❓ WS Query: ${question}`);
