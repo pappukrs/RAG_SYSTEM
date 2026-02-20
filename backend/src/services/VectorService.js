@@ -1,10 +1,11 @@
 const { ChromaClient } = require('chromadb');
+const config = require('../config');
 
-class VectorStore {
+class VectorService {
     constructor() {
-        this.url = process.env.CHROMA_URL || 'http://chromadb:8000';
+        this.url = config.chroma.url;
         this.client = new ChromaClient({
-            path: this.url
+            path: this.url,
         });
         this.collectionName = 'documents';
         this.checkConnection();
@@ -23,7 +24,7 @@ class VectorStore {
         try {
             return await this.client.getOrCreateCollection({
                 name: this.collectionName,
-                metadata: { 'hnsw:space': 'cosine' }
+                metadata: { 'hnsw:space': 'cosine' },
             });
         } catch (error) {
             throw new Error(`Failed to get/create collection: ${error.message}`);
@@ -34,18 +35,18 @@ class VectorStore {
         const collection = await this.getOrCreateCollection();
 
         const ids = chunks.map((_, idx) => `doc_${Date.now()}_${idx}`);
-        const documents = chunks.map(chunk => chunk.text);
+        const documents = chunks.map((chunk) => chunk.text);
         const metadatas = chunks.map((chunk, idx) => ({
             ...metadata,
             ...chunk.metadata,
-            chunkIndex: idx
+            chunkIndex: idx,
         }));
 
         await collection.add({
             ids,
             embeddings,
             documents,
-            metadatas
+            metadatas,
         });
 
         return { success: true, count: chunks.length };
@@ -56,15 +57,18 @@ class VectorStore {
 
         const results = await collection.query({
             queryEmbeddings: [queryEmbedding],
-            nResults: topK
+            nResults: topK,
         });
+
+        // In case no results
+        if (!results.documents || results.documents.length === 0) return [];
 
         return results.documents[0].map((doc, idx) => ({
             text: doc,
             metadata: results.metadatas[0][idx],
-            distance: results.distances[0][idx]
+            distance: results.distances[0][idx],
         }));
     }
 }
 
-module.exports = new VectorStore();
+module.exports = new VectorService();

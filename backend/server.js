@@ -1,50 +1,32 @@
-require('dotenv').config();
+const config = require('./src/config');
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
 const fs = require('fs');
-const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
-
-const uploadRoute = require('./routes/upload');
-const queryRoute = require('./routes/query');
-const embeddingService = require('./services/embeddingService');
-const vectorStore = require('./services/vectorStore');
-const llmService = require('./services/llmService');
+const routes = require('./src/routes');
+const RAGService = require('./src/services/RAGService');
 
 const app = express();
 const server = http.createServer(app);
 const io = new socketIo.Server(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+        origin: '*',
+        methods: ['GET', 'POST'],
+    },
 });
 
-const PORT = process.env.PORT || 4000;
-
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+if (!fs.existsSync(config.uploadDir)) {
+    fs.mkdirSync(config.uploadDir, { recursive: true });
 }
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// File upload configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-});
-
-const upload = multer({ storage });
-
 // Routes
-app.use('/api/upload', upload.single('file'), uploadRoute);
-app.use('/api/query', queryRoute);
+app.use('/api', routes);
 
 // WebSocket Logic
 io.on('connection', (socket) => {
@@ -57,18 +39,14 @@ io.on('connection', (socket) => {
         try {
             console.log(`❓ WS Query: ${question}`);
 
-            // 1. Generate embedding
-            const queryEmbedding = await embeddingService.generateEmbedding(question);
+            const { sources } = await RAGService.answerQuestionStreaming(
+                question,
+                (chunk) => {
+                    socket.emit('chunk', chunk);
+                }
+            );
 
-            // 2. Search vector store
-            const relevantChunks = await vectorStore.query(queryEmbedding, 5);
-
-            // 3. Stream from LLM
-            await llmService.generateAnswerStreaming(question, relevantChunks, (chunk) => {
-                socket.emit('chunk', chunk);
-            });
-
-            socket.emit('done', { sources: relevantChunks.map(c => c.metadata) });
+            socket.emit('done', { sources });
         } catch (error) {
             console.error('❌ WS Query error:', error);
             socket.emit('error', error.message);
@@ -81,9 +59,10 @@ io.on('connection', (socket) => {
 });
 
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', message: 'RAG Backend running' });
+    res.json({ status: 'ok', message: 'RAG Backend running with modular MVC' });
 });
 
-server.listen(PORT, () => {
-    console.log(`✅ Backend server running on port ${PORT}`);
+server.listen(config.port, () => {
+    console.log(`✅ Backend server running on port ${config.port}`);
+    console.log(`🤖 Current LLM Provider: ${config.llmProvider}`);
 });

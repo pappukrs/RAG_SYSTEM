@@ -2,7 +2,7 @@ const fs = require('fs/promises');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 
-class DocumentProcessor {
+class DocumentService {
     async processFile(filePath, fileType) {
         let text = '';
 
@@ -11,7 +11,9 @@ class DocumentProcessor {
                 const dataBuffer = await fs.readFile(filePath);
                 const pdfData = await pdfParse(dataBuffer);
                 text = pdfData.text;
-            } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            } else if (
+                fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ) {
                 const result = await mammoth.extractRawText({ path: filePath });
                 text = result.value;
             } else if (fileType === 'text/plain') {
@@ -38,8 +40,8 @@ class DocumentProcessor {
                     metadata: {
                         start,
                         end: Math.min(end, text.length),
-                        length: chunk.length
-                    }
+                        length: chunk.length,
+                    },
                 });
             }
 
@@ -50,4 +52,4 @@ class DocumentProcessor {
     }
 }
 
-module.exports = new DocumentProcessor();
+module.exports = new DocumentService();

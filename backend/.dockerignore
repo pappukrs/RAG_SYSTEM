@@ -1,0 +1,8 @@
+node_modules
+uploads
+model-cache
+npm-debug.log
+.git
+.dockerignore
+.gitignore
+README.md
